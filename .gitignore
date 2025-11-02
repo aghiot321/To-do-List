@@ -1,10 +1,21 @@
+# Documentation
 HELP.md
+
+# Maven
 target/
 .mvn/wrapper/maven-wrapper.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+pom.xml.bak
+release.properties
+dependency-reduced-pom.xml
+.mvn/timing.properties
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# STS (Spring Tool Suite)
 .apt_generated
 .classpath
 .factorypath
@@ -12,14 +23,17 @@ target/
 .settings
 .springBeans
 .sts4-cache
+.sts4-cache/
 
-### IntelliJ IDEA ###
+# IntelliJ IDEA
 .idea
+.idea/
 *.iws
 *.iml
 *.ipr
+out/
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,5 +43,71 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VS Code
 .vscode/
+*.code-workspace
+
+# Database (MySQL)
+mysql_data/
+mysql_logs/
+*.sql~
+*.db
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+*.log
+*.log.*
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE - General
+.venv
+venv/
+ENV/
+
+# Spring Boot
+application*.properties
+application*.yml
+!application.properties
+!application.yml
+
+# Gradle wrapper
+.gradle/
+gradle-wrapper.jar
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.project
+.classpath

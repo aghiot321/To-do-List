@@ -11,17 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.Data;
 
- /**
-     * 
-     * Id
-     * Usuário (ID_USUARIO)
-     * Descrição da tarefa
-     * Título da tarefa
-     * Data de Início
-     * Data de Término
-     * Prioridade
-     */
-
 @Data
 @Entity(name = "tb_tasks")
 public class TaskModel {

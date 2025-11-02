@@ -1,0 +1,191 @@
+# ============================================================================
+# DOCKER COMPOSE - APLICAÇÃO TODOLIST COM MYSQL
+# ============================================================================
+# Este arquivo define dois serviços principais:
+# 1. MySQL: Banco de dados relacional
+# 2. ToDoList App: Aplicação Spring Boot
+# 
+# Para executar: docker-compose up -d
+# Para parar: docker-compose down
+# Para visualizar logs: docker-compose logs -f
+# ============================================================================
+
+services:
+  # ========================================================================
+  # SERVIÇO 1: BANCO DE DADOS MySQL
+  # ========================================================================
+  mysql:
+    image: mysql:8.4.0
+    container_name: todolist-mysql
+    
+    # Variáveis de ambiente para configuração do MySQL
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-todolist}
+      MYSQL_USER: ${MYSQL_USER:-todolist_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-todolist_password}
+      MYSQL_ROOT_HOST: '%'
+      # Configurações adicionais de performance
+      MYSQL_INITDB_SKIP_TZINFO: 'yes'
+      MYSQL_TCP_PORT: ${MYSQL_PORT:-3307}
+    
+    # Porta exposta para acesso externo
+    ports:
+      - "${MYSQL_PORT:-3309}:3306"
+    
+    # Volumes para persistência de dados e inicialização
+    volumes:
+      # Volume nomeado para persistir dados do MySQL
+      # Garante que os dados do banco sejam salvos e recuperados após restart
+      - mysql_data:/var/lib/mysql
+      # Script SQL para inicializar o banco de dados (read-only)
+      # Executado automaticamente na primeira inicialização
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # Volume para logs do MySQL (persistência de logs)
+      - mysql_logs:/var/log/mysql
+    
+    # Configuração de rede
+    networks:
+      - todolist-network
+    
+    # Health check para validar disponibilidade do banco
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]
+      interval: 10s          # Verifica a cada 10 segundos
+      timeout: 5s            # Timeout de 5 segundos
+      retries: 5             # Máximo 5 tentativas
+      start_period: 20s      # Aguarda 20s antes de começar os testes
+    
+    # Política de reinicialização
+    restart: unless-stopped
+    
+    # Limites de recursos (opcional)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Argumentos customizados para MySQL
+    command: 
+      - '--character-set-server=utf8mb4'
+      - '--collation-server=utf8mb4_unicode_ci'
+
+  # ========================================================================
+  # SERVIÇO 2: APLICAÇÃO SPRING BOOT
+  # ========================================================================
+  todolist-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Args para o build (opcional)
+      args:
+        MAVEN_PROFILE: prod
+    
+    container_name: todolist-app
+    
+    # Dependências entre serviços
+    depends_on:
+      mysql:
+        condition: service_healthy  # Aguarda até o MySQL estar saudável
+    
+    # Variáveis de ambiente para a aplicação
+    environment:
+      # Configuração do banco de dados
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-todolist}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-todolist_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-todolist_password}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      
+      # Configuração do JPA/Hibernate
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.MySQL8Dialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: 'false'
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: 'true'
+      
+      # Configuração do Spring
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILE_ACTIVE:-prod}
+      SERVER_PORT: ${SERVER_PORT:-8080}
+      
+      # Configuração JVM
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
+      
+      # Configuração de pool de conexões
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE:-10}
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DATASOURCE_HIKARI_MINIMUM_IDLE:-5}
+    
+    # Portas expostas
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+    
+    # Configuração de rede
+    networks:
+      - todolist-network
+    
+    # Política de reinicialização
+    restart: unless-stopped
+    
+    # Health check para validar disponibilidade da aplicação
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s          # Verifica a cada 30 segundos
+      timeout: 5s            # Timeout de 5 segundos
+      retries: 3             # Máximo 3 tentativas
+      start_period: 30s      # Aguarda 30s antes de começar os testes
+    
+    # Limites de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    
+    # Logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+volumes:
+  # Volume para persistir dados do MySQL
+  # - Armazena todos os bancos de dados, tabelas e índices
+  # - Criado em ./mysql_data no host
+  # - Sobrevive a restart e down do container
+  mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./mysql_data
+  
+  # Volume para persistir logs do MySQL
+  # - Armazena logs de erro, query log, slow query log
+  # - Útil para debugging e monitoramento
+  mysql_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./mysql_logs
+
+# ============================================================================
+# REDES
+# ============================================================================
+networks:
+  # Rede bridge customizada para comunicação isolada entre containers
+  # Garante que apenas containers desta composição podem se comunicar
+  todolist-network:
+    driver: bridge
+    name: todolist-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
+          ip_range: 172.25.1.0/24
