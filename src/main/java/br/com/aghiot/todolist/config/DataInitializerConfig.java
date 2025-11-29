@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import br.com.aghiot.todolist.task.ITaskRepository;
@@ -17,6 +18,7 @@ import br.com.aghiot.todolist.user.UserModel;
 public class DataInitializerConfig {
 
     @Bean
+    @Profile("!test")
     @SuppressWarnings("unused")
     CommandLineRunner initData(IUserRepository userRepository, ITaskRepository taskRepository) {
         return _unused -> {
