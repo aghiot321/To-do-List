@@ -290,7 +290,6 @@ AAAECNB5W3Yz2wBdR5eQHtxBNOeCR0MvV95rBRS3Kl5N2JoK9zwQFWr1MN1IR9M0H9FXzu
 -----END OPENSSH PRIVATE KEY-----
 
 **Copie a chave privada completa** (incluindo `-----BEGIN` e `-----END`)
-dckr_pat_8hhfXTZKfFsMcoi_0I5OW9MIjzk
 
 ### 9️⃣ Configurar Secrets no GitHub (5 min)
 
