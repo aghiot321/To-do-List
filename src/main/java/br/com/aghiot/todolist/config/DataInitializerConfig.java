@@ -27,21 +27,18 @@ public class DataInitializerConfig {
             }
 
             UserModel user1 = new UserModel();
-            user1.setId(UUID.fromString("550e8400-e29b-41d4-a716-446655440000"));
             user1.setName("João Silva");
             user1.setUsername("joao");
             user1.setPassword(BCrypt.withDefaults().hashToString(12, "senha123".toCharArray()));
             userRepository.save(user1);
 
             UserModel user2 = new UserModel();
-            user2.setId(UUID.fromString("550e8400-e29b-41d4-a716-446655440001"));
             user2.setName("Maria Santos");
             user2.setUsername("maria");
             user2.setPassword(BCrypt.withDefaults().hashToString(12, "senha123".toCharArray()));
             userRepository.save(user2);
 
             UserModel user3 = new UserModel();
-            user3.setId(UUID.fromString("550e8400-e29b-41d4-a716-446655440002"));
             user3.setName("Pedro Oliveira");
             user3.setUsername("pedro");
             user3.setPassword(BCrypt.withDefaults().hashToString(12, "senha123".toCharArray()));
