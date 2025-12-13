@@ -1,0 +1,28 @@
+# ========================================
+# Arquivo de exemplo de variáveis do Terraform
+# ========================================
+# 
+# INSTRUÇÕES:
+# 1. Copie este arquivo para terraform.tfvars
+# 2. Preencha os valores reais
+# 3. NUNCA faça commit de terraform.tfvars no Git!
+#
+# ========================================
+
+# Configurações do Google Cloud Platform
+gcp_project_id = "seu-projeto-id"  # Ex: todolist-prod-123456
+gcp_region     = "us-west1"        # Região gratuita
+gcp_zone       = "us-west1-b"      # Zona gratuita
+
+# Configurações da VM
+instance_name   = "todolist-server"
+machine_type    = "e2-micro"       # Tipo gratuito (não altere)
+boot_disk_size  = 30               # Máximo gratuito (não aumente)
+boot_disk_type  = "pd-standard"    # Tipo gratuito (não altere)
+
+# Configurações de SSH
+ssh_user       = "seu_usuario"     # Ex: triguinhogemeos
+ssh_public_key = "ssh-ed25519 AAAA... seu_email@gmail.com"  # Sua chave pública SSH
+
+# Ambiente
+environment = "prod"
