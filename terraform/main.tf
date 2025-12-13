@@ -67,6 +67,22 @@ locals {
   EOT
 }
 
+# Regra de firewall para SSH (porta 22)
+resource "google_compute_firewall" "todolist_ssh" {
+  name    = "allow-ssh-todolist"
+  network = "default"
+  
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["todolist-server"]
+  
+  description = "Permite acesso SSH ao servidor ToDoList"
+}
+
 # Regra de firewall para aplicação (porta 8080)
 resource "google_compute_firewall" "todolist_app" {
   name    = "allow-todolist-app"
