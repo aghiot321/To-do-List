@@ -34,17 +34,27 @@ locals {
     apt-get update -qq
     apt-get upgrade -y -qq
     
-    # Instalar Docker
+    # Instalar Docker (já inclui docker compose como plugin)
     echo "=== Instalando Docker ==="
     curl -fsSL https://get.docker.com | sh
     
     # Adicionar usuário ao grupo docker
     usermod -aG docker ${var.ssh_user}
     
-    # Instalar Docker Compose
-    echo "=== Instalando Docker Compose ==="
-    curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    # Criar symlink para docker-compose apontar para 'docker compose'
+    echo "=== Configurando Docker Compose ==="
+    cat > /usr/local/bin/docker-compose << 'EOF'
+#!/bin/bash
+exec docker compose "$@"
+EOF
     chmod +x /usr/local/bin/docker-compose
+    
+    # Criar grupo docker se não existir e garantir permissões
+    groupadd -f docker
+    usermod -aG docker ${var.ssh_user}
+    
+    # Dar permissões temporárias ao socket do docker para o grupo
+    chmod 666 /var/run/docker.sock || true
     
     # Instalar Git
     echo "=== Instalando Git ==="
@@ -60,7 +70,8 @@ locals {
     # Verificar instalações
     echo "=== Verificando instalações ==="
     docker --version
-    docker-compose --version
+    docker compose version
+    docker-compose --version  # Testar o wrapper também
     git --version
     
     echo "=== Configuração concluída com sucesso ==="
