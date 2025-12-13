@@ -19,21 +19,19 @@ import at.favre.lib.crypto.bcrypt.BCrypt;
 
 @RestController
 @RequestMapping("/users")
-
 public class UserController {
     @Autowired
     private IUserRepository userRepository;
 
     @PostMapping("/")
     public ResponseEntity create(@RequestBody UserModel userModel) {
-        var user =  this.userRepository.findByUsername(userModel.getUsername());
+        var user = this.userRepository.findByUsername(userModel.getUsername());
 
-        if(user != null){
+        if (user != null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário já existe");
         }
 
-         var passwordHashred = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
-
+        var passwordHashred = BCrypt.withDefaults().hashToString(12, userModel.getPassword().toCharArray());
         userModel.setPassword(passwordHashred);
 
         var userCreated = this.userRepository.save(userModel);

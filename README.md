@@ -1,84 +1,127 @@
-# todolist
+# ToDoList - Gerenciador de Tarefas
 
-## Docker Compose - Configuração
+Aplicação web para gerenciamento de tarefas desenvolvida com Spring Boot, MySQL e Docker. Inclui pipeline completo de CI/CD com provisionamento automático de infraestrutura via Terraform.
 
-Configuração Docker Compose com dois serviços:
-- MySQL 8.4.0 (banco de dados)
-- Spring Boot Application (aplicação)
+![CI/CD Status](https://github.com/aghiot321/To-do-List/actions/workflows/cicd-terraform.yml/badge.svg)
 
-### Variáveis de Ambiente
+## Tecnologias
 
-As seguintes variáveis estão configuradas em `.env`:
+- Java 21
+- Spring Boot 3.5.4
+- MySQL 8.4.0
+- Docker e Docker Compose
+- Maven
+- Terraform
+- GitHub Actions
 
-- MYSQL_ROOT_PASSWORD - Senha root do MySQL
-- MYSQL_DATABASE - Nome do banco de dados
-- MYSQL_USER - Usuário do banco
-- MYSQL_PASSWORD - Senha do usuário
-- MYSQL_PORT - Porta do MySQL (padrão: 3306)
-- SPRING_PROFILE_ACTIVE - Perfil da aplicação
-- SERVER_PORT - Porta da aplicação (padrão: 8080)
-- JAVA_OPTS - Opções JVM
+## Pré-requisitos
 
-### Como Executar
+- Java 21 ou superior
+- Maven 3.9 ou superior
+- Docker e Docker Compose
+- Git
 
-Iniciar os serviços:
+## Estrutura do Projeto
+
+```
+todolist/
+├── src/
+│   ├── main/java/br/com/aghiot/todolist/
+│   │   ├── user/              # Módulo de usuários
+│   │   ├── task/              # Módulo de tarefas
+│   │   ├── Filter/            # Filtros de autenticação
+│   │   └── config/            # Configurações
+│   └── test/                  # Testes unitários
+├── terraform/                 # Infraestrutura como código
+├── docker-compose.yml         # Ambiente de desenvolvimento
+├── docker-compose.prod.yml    # Ambiente de produção
+├── Dockerfile                 # Build da aplicação
+└── pom.xml                    # Dependências Maven
+```
+
+## Instalação e Execução Local
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/aghiot321/To-do-List.git
+cd To-do-List
+```
+
+### 2. Configurar variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto:
+
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` com suas configurações:
+
+```env
+MYSQL_ROOT_PASSWORD=root_password
+MYSQL_DATABASE=todolist
+MYSQL_USER=todolist_user
+MYSQL_PASSWORD=todolist_password
+MYSQL_PORT=3306
+SPRING_PROFILE_ACTIVE=dev
+SERVER_PORT=8080
+JAVA_OPTS=-Xmx512m
+```
+
+### 3. Iniciar com Docker Compose
+
 ```bash
 docker-compose up -d
 ```
 
-Parar os serviços:
+A aplicação estará disponível em `http://localhost:8080`
+
+### 4. Verificar status
+
+```bash
+# Status dos containers
+docker-compose ps
+
+# Logs da aplicação
+docker-compose logs -f todolist-app
+
+# Logs do MySQL
+docker-compose logs -f mysql
+```
+
+### 5. Parar os serviços
+
 ```bash
 docker-compose down
 ```
 
-Ver status:
+## Executar Testes
+
 ```bash
-docker-compose ps
+mvn test
 ```
 
-Ver logs:
+Para gerar relatório de cobertura:
+
 ```bash
-docker-compose logs -f
+mvn test jacoco:report
 ```
 
-### Acessar os Serviços
+O relatório estará disponível em `target/site/jacoco/index.html`
 
-- Aplicação: http://localhost:8080
-- MySQL: localhost:3306
+## Banco de Dados
 
-Credenciais MySQL:
-- Usuário: todolist_user
-- Senha: todolist_password
-- Banco: todolist
-
-### Testar Conexão com MySQL
+### Conexão MySQL
 
 ```bash
 docker-compose exec mysql mysql -u todolist_user -p todolist
 ```
 
-Dentro do MySQL:
-```sql
-show tables;
-describe user;
-describe task;
-```
+### Estrutura
 
-### Volumes
-
-Dados persistem em `./mysql_data`. Para remover dados:
-```bash
-docker-compose down -v
-```
-
-### Rede
-
-Containers se comunicam através da rede `todolist-network`.
-
-### Health Checks
-
-- MySQL: verificação a cada 10 segundos
-- Aplicação: verificação a cada 30 segundos
+- **tb_users**: Armazena usuários do sistema
+- **tb_tasks**: Armazena tarefas vinculadas aos usuários
 
 ### Backup e Restauração
 
@@ -92,192 +135,97 @@ Restaurar:
 docker-compose exec mysql mysql -u todolist_user -p todolist < backup.sql
 ```
 
-### Solução de Problemas
+## API Endpoints
 
-Logs da aplicação:
+### Usuários
+
+- `POST /users/` - Criar usuário
+- `GET /users/` - Listar todos os usuários
+- `GET /users/{id}` - Buscar usuário por ID
+- `PUT /users/{id}` - Atualizar usuário
+- `DELETE /users/{id}` - Remover usuário
+
+### Tarefas
+
+- `POST /tasks/` - Criar tarefa (requer autenticação)
+- `GET /tasks/` - Listar todas as tarefas
+- `GET /tasks/{id}` - Buscar tarefa por ID
+- `PUT /tasks/{id}` - Atualizar tarefa
+- `DELETE /tasks/{id}` - Remover tarefa
+
+### Autenticação
+
+As rotas de tarefas requerem autenticação Basic Auth:
+- Header: `Authorization: Basic <base64(username:password)>`
+
+## CI/CD Pipeline
+
+O projeto utiliza GitHub Actions e Terraform para automação completa de CI/CD.
+
+### Etapas do Pipeline
+
+1. **Testes (CI)**: Executa testes unitários e gera relatório de cobertura
+2. **Provisionar Infraestrutura (IaC)**: Cria/atualiza VM no Google Cloud Platform via Terraform
+3. **Build e Push**: Constrói imagem Docker e envia para Docker Hub
+4. **Deploy**: Implanta aplicação no servidor automaticamente
+
+### Fluxo do Pipeline
+
+```
+Push para main
+    ↓
+Executar testes
+    ↓
+Provisionar infraestrutura (Terraform) ← paralelo → Build imagem Docker
+    ↓
+Deploy automático no servidor
+```
+
+### Configuração de Secrets
+
+Configure os seguintes secrets em `Settings > Secrets and variables > Actions`:
+
+**GCP (Terraform)**
+- `GCP_PROJECT_ID`: ID do projeto no Google Cloud
+- `GCP_SA_KEY`: Chave JSON da Service Account
+- `GCP_TERRAFORM_BUCKET`: Bucket para state do Terraform
+
+**SSH**
+- `SSH_USER`: Usuário SSH do servidor
+- `SSH_PUBLIC_KEY`: Chave pública SSH
+- `SSH_PRIVATE_KEY`: Chave privada SSH
+
+**Docker Hub**
+- `DOCKER_USERNAME`: Username do Docker Hub
+- `DOCKER_PASSWORD`: Token de acesso do Docker Hub
+
+### Configurar GCP Service Account
+
 ```bash
-docker-compose logs todolist-app
+# Criar Service Account
+gcloud iam service-accounts create terraform-sa \
+  --display-name="Terraform Service Account"
+
+# Adicionar permissões
+gcloud projects add-iam-policy-binding SEU_PROJECT_ID \
+  --member="serviceAccount:terraform-sa@SEU_PROJECT_ID.iam.gserviceaccount.com" \
+  --role="roles/compute.admin"
+
+# Gerar chave JSON
+gcloud iam service-accounts keys create ~/terraform-sa-key.json \
+  --iam-account=terraform-sa@SEU_PROJECT_ID.iam.gserviceaccount.com
 ```
 
-Logs do MySQL:
+### Criar Bucket para Terraform State
+
 ```bash
-docker-compose logs mysql
+gcloud storage buckets create gs://todolist-terraform-state \
+  --project=SEU_PROJECT_ID \
+  --location=us-west1 \
+  --uniform-bucket-level-access
 ```
 
----
-
-## 🚀 CI/CD Pipeline com Infraestrutura como Código (IaC)
-
-![CI/CD Status](https://github.com/aghiot321/To-do-List/actions/workflows/cicd-terraform.yml/badge.svg)
-
-Este projeto utiliza **GitHub Actions** + **Terraform** para automação completa de:
-- ✅ **CI** (Integração Contínua): Testes automatizados
-- ✅ **IaC** (Infraestrutura como Código): Provisionamento automático de VMs no GCP
-- ✅ **CD** (Entrega Contínua): Deploy automático da aplicação
-
-### 🎯 Novidade: Atividade 04 - Terraform Integration
-
-Agora a infraestrutura é provisionada automaticamente via Terraform! Não é mais necessário criar VMs manualmente.
-
-**O que mudou?**
-- 🏗️ **Antes**: Criar VM manualmente no GCP → Configurar Docker → Fazer deploy
-- 🎯 **Agora**: Push no GitHub → Terraform cria VM → Instala Docker automaticamente → Deploy automático
-
-📖 **Documentação completa**: [ATIVIDADE_04_IaC.md](ATIVIDADE_04_IaC.md)
-
-### 📋 Visão Geral do Pipeline
-
-O pipeline é executado automaticamente a cada push na branch `main` e consiste em **4 etapas principais**:
-
-#### 1️⃣ **Testes Unitários (CI)**
-- Executa todos os testes unitários com Maven
-- Gera relatório de cobertura de código com JaCoCo
-- Armazena relatórios como artefatos (disponíveis por 30 dias)
-- **Bloqueio**: Se os testes falharem, o pipeline é interrompido
-
-#### 2️⃣ **Provisionar Infraestrutura (IaC) - NOVO! 🎉**
-- Usa **Terraform** para criar/atualizar VM no Google Cloud Platform
-- Configura regras de firewall (portas 8080 e 3309)
-- Injeta script de inicialização (Cloud-Init) que instala:
-  - Docker
-  - Docker Compose
-  - Git
-- Captura IP público da VM (usado no deploy)
-- State armazenado remotamente no Google Cloud Storage (GCS)
-- **Só executa se**: os testes passarem
-
-#### 3️⃣ **Build e Push da Imagem Docker (CD)**
-- Constrói a imagem Docker da aplicação
-- Faz o push para o Docker Hub com tags:
-  - `main-<SHA>` (SHA do commit para rastreabilidade)
-  - `latest` (última versão estável)
-- Utiliza cache para otimizar builds subsequentes
-- **Executa em paralelo** com o provisionamento da infraestrutura
-
-#### 4️⃣ **Deploy Automático (CD)**
-- Conecta ao servidor via SSH usando **IP dinâmico** (obtido do Terraform)
-- Aguarda Docker estar instalado (cloud-init pode levar alguns minutos)
-- Clone/atualiza o código do repositório
-- Baixa a nova imagem do Docker Hub
-- Para os containers antigos
-- Sobe os novos containers com a versão atualizada
-- Verifica o health check da aplicação
-- Limpa imagens antigas para economizar espaço
-- **Só executa se**: infraestrutura provisionada + build concluído
-
-### 🔐 Secrets Necessários no GitHub
-
-Para o pipeline funcionar com Terraform, configure os seguintes secrets em `Settings > Secrets and variables > Actions`:
-
-#### Secrets do Terraform (GCP)
-
-| Secret | Descrição | Como Obter |
-|--------|-----------|------------|
-| `GCP_PROJECT_ID` | ID do projeto no GCP | Console GCP > Dashboard |
-| `GCP_SA_KEY` | Service Account JSON completo | IAM > Service Accounts > Chaves |
-| `GCP_TERRAFORM_BUCKET` | Bucket para state do Terraform | `todolist-terraform-state` |
-
-#### Secrets do SSH
-
-| Secret | Descrição | Como Obter |
-|--------|-----------|------------|
-| `SSH_USER` | Usuário SSH da VM | Seu username do GCP |
-| `SSH_PUBLIC_KEY` | Chave SSH pública | `cat ~/.ssh/id_ed25519.pub` |
-| `SSH_PRIVATE_KEY` | Chave SSH privada | `cat ~/.ssh/id_ed25519` |
-
-#### Secrets do Docker Hub
-
-| Secret | Descrição | Como Obter |
-|--------|-----------|------------|
-| `DOCKER_USERNAME` | Seu username do Docker Hub | https://hub.docker.com |
-| `DOCKER_PASSWORD` | Token de acesso | Docker Hub > Settings > Security |
-
-**📖 Guia detalhado de configuração**: [ATIVIDADE_04_IaC.md](ATIVIDADE_04_IaC.md#-secrets-do-github)
-
-### 🖥️ Configuração Inicial (Terraform)
-
-✨ **Boa notícia**: Não é mais necessário configurar o servidor manualmente!
-
-O Terraform cuida de:
-- ✅ Criar a VM no Google Cloud Platform (e2-micro, Free Tier)
-- ✅ Configurar regras de firewall
-- ✅ Instalar Docker e Docker Compose automaticamente (via Cloud-Init)
-- ✅ Injetar sua chave SSH
-- ✅ Preparar o ambiente para o deploy
-
-**O que você precisa fazer:**
-
-1. **Configurar Secrets no GitHub** (veja seção acima)
-2. **Criar Service Account no GCP**:
-   ```bash
-   # Via gcloud CLI
-   gcloud iam service-accounts create terraform-sa \
-     --display-name="Terraform Service Account"
-   
-   gcloud projects add-iam-policy-binding SEU_PROJECT_ID \
-     --member="serviceAccount:terraform-sa@SEU_PROJECT_ID.iam.gserviceaccount.com" \
-     --role="roles/compute.admin"
-   
-   gcloud iam service-accounts keys create ~/terraform-sa-key.json \
-     --iam-account=terraform-sa@SEU_PROJECT_ID.iam.gserviceaccount.com
-   ```
-
-3. **Criar Bucket para State do Terraform**:
-   ```bash
-   gcloud storage buckets create gs://todolist-terraform-state \
-     --project=SEU_PROJECT_ID \
-     --location=us-west1 \
-     --uniform-bucket-level-access
-   ```
-
-4. **Push para `main`** e o Terraform fará o resto! 🚀
-
-📖 **Guia completo**: [ATIVIDADE_04_IaC.md](ATIVIDADE_04_IaC.md#-configuração-inicial)
-
-### 📊 Monitorando o Pipeline
-
-1. Acesse a aba **Actions** no GitHub
-2. Visualize o status de cada execução
-3. Clique em uma execução para ver logs detalhados
-4. Cada job (Test, Build, Deploy) pode ser expandido
-
-### 🚀 Executando o Deploy Manualmente
-
-Se necessário, você pode executar o pipeline manualmente:
-
-1. Vá para **Actions** > **CI/CD Pipeline**
-2. Clique em **Run workflow**
-3. Selecione a branch `main`
-4. Clique em **Run workflow**
-
-### 📦 Estrutura de Tags das Imagens
-
-As imagens Docker seguem o seguinte padrão:
-
-```
-seu_usuario/todolist-app:main-abc123def456  # SHA do commit
-seu_usuario/todolist-app:latest              # Última versão
-```
-
-Isso permite rastreabilidade completa: você sempre sabe qual versão do código está rodando em produção.
-
-### 🔧 Arquivos Importantes do CI/CD
-
-- `.github/workflows/cicd-terraform.yml` - Pipeline com Terraform integrado ⭐ **NOVO**
-- `.github/workflows/cicd.yml` - Pipeline legado (sem Terraform)
-- `terraform/` - Infraestrutura como código ⭐ **NOVO**
-  - `main.tf` - Recursos GCP (VM, firewall)
-  - `variables.tf` - Variáveis configuráveis
-  - `outputs.tf` - Outputs (IP público, URLs)
-  - `backend.tf` - Backend remoto (GCS)
-  - `README.md` - Documentação do Terraform
-- `docker-compose.prod.yml` - Configuração para produção
-- `.env.example` - Template de variáveis de ambiente
-- `Dockerfile` - Build multi-stage da aplicação
-
-### 🆕 Testando Terraform Localmente
-
-Antes do primeiro deploy via GitHub Actions, teste localmente:
+### Executar Terraform Localmente
 
 ```bash
 cd terraform
@@ -285,93 +233,191 @@ cd terraform
 # Copiar arquivo de exemplo
 cp terraform.tfvars.example terraform.tfvars
 
-# Editar com seus valores
+# Editar variáveis
 nano terraform.tfvars
 
-# Configurar credenciais
+# Configurar credenciais GCP
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/terraform-sa-key.json"
 
-# Inicializar
+# Inicializar e aplicar
 terraform init
-
-# Validar
-terraform validate
-
-# Ver plano
 terraform plan
-
-# Aplicar
 terraform apply
 
 # Ver IP público
 terraform output public_ip
 ```
 
-📖 **Guia completo**: [terraform/README.md](terraform/README.md)
+### Deploy Manual
 
-### 📝 Logs e Troubleshooting
+Se necessário, execute o pipeline manualmente:
 
-Se algo der errado:
+1. Acesse Actions no GitHub
+2. Selecione "CI/CD Pipeline"
+3. Clique em "Run workflow"
+4. Selecione a branch `main`
 
-**No GitHub Actions:**
+## Comandos Úteis
+
+### Docker Compose
+
+```bash
+# Ver status
+docker-compose ps
+
+# Logs em tempo real
+docker-compose logs -f
+
+# Reiniciar aplicação
+docker-compose restart todolist-app
+
+# Recriar containers
+docker-compose up -d --force-recreate
+
+# Remover volumes
+docker-compose down -v
 ```
-1. Vá para Actions > selecione a execução falhada
-2. Expanda o job e step que falhou
-3. Analise os logs vermelhos
+
+### Docker
+
+```bash
+# Listar imagens
+docker images
+
+# Remover imagens antigas
+docker image prune -af
+
+# Ver uso de recursos
+docker stats
 ```
 
-**No Servidor:**
+### Maven
+
+```bash
+# Limpar e compilar
+mvn clean compile
+
+# Executar aplicação
+mvn spring-boot:run
+
+# Gerar JAR
+mvn package
+
+# Pular testes
+mvn package -DskipTests
+```
+
+### Produção
+
 ```bash
 # Ver logs da aplicação
-docker-compose -f docker-compose.prod.yml logs todolist-app
+docker-compose -f docker-compose.prod.yml logs -f todolist-app
 
 # Ver status dos containers
 docker-compose -f docker-compose.prod.yml ps
 
-# Verificar health check
+# Reiniciar aplicação
+docker-compose -f docker-compose.prod.yml restart todolist-app
+
+# Atualizar para nova versão
+docker-compose -f docker-compose.prod.yml pull
+docker-compose -f docker-compose.prod.yml up -d
+
+# Health check
 curl http://localhost:8080/actuator/health
 ```
 
-### ✅ Checklist de Deploy (Terraform)
+## Health Check
+
+A aplicação expõe endpoints de health check via Spring Actuator:
+
+```bash
+# Health check básico
+curl http://localhost:8080/actuator/health
+
+# Health check detalhado
+curl http://localhost:8080/actuator/health | jq
+```
+
+## Solução de Problemas
+
+### Aplicação não inicia
+
+1. Verifique se o MySQL está rodando: `docker-compose ps`
+2. Verifique logs: `docker-compose logs mysql`
+3. Confirme variáveis de ambiente no `.env`
+
+### Erro de conexão com banco
+
+1. Aguarde o MySQL estar pronto (health check)
+2. Verifique credenciais no `.env`
+3. Teste conexão: `docker-compose exec mysql mysqladmin ping`
+
+### Permissão negada (Docker)
+
+```bash
+# Adicionar usuário ao grupo docker
+sudo usermod -aG docker $USER
+
+# Aplicar mudanças
+newgrp docker
+```
+
+### Pipeline falha no deploy
+
+1. Verifique secrets configurados no GitHub
+2. Confirme IP do servidor acessível
+3. Valide chave SSH funcionando
+4. Revise logs em Actions
+
+## Recursos do Terraform
+
+O Terraform provisiona automaticamente:
+
+- VM e2-micro no GCP (Free Tier)
+- Regras de firewall (portas 8080 e 3309)
+- Docker e Docker Compose
+- Configuração SSH
+
+Arquivos principais:
+- `terraform/main.tf` - Recursos GCP (VM, firewall)
+- `terraform/variables.tf` - Variáveis configuráveis
+- `terraform/outputs.tf` - Outputs (IP público, URLs)
+- `terraform/backend.tf` - Backend remoto (GCS)
+
+## Custos (GCP Free Tier)
+
+A infraestrutura utiliza o Free Tier permanente do Google Cloud:
+
+- VM e2-micro (1 vCPU, 1GB RAM): GRATUITO
+- 30 GB de disco SSD: GRATUITO
+- IP Ephemeral: GRATUITO
+- 1GB de tráfego/mês: GRATUITO
+
+**Custo total: R$ 0,00/mês**
+
+Requisitos para manter gratuito:
+- Região: `us-west1`, `us-central1` ou `us-east1`
+- Tipo de máquina: `e2-micro`
+- Disco: máximo 30 GB
+- IP: ephemeral (não reservar estático)
+
+## Checklist de Deploy
 
 - [ ] Service Account criada no GCP
 - [ ] Bucket para state do Terraform criado (GCS)
-- [ ] Secrets do GitHub configurados (9 secrets no total)
+- [ ] Secrets do GitHub configurados (9 secrets)
 - [ ] Chave SSH gerada e adicionada aos secrets
-- [ ] Terraform testado localmente (opcional, mas recomendado)
+- [ ] Terraform testado localmente (opcional)
 - [ ] Push para `main` realizado
-- [ ] Pipeline executado com sucesso (4 jobs verdes)
+- [ ] Pipeline executado com sucesso
 - [ ] VM criada automaticamente no GCP
-- [ ] Aplicação acessível via `http://<IP>:8080/actuator/health`
+- [ ] Aplicação acessível via health check
 
-### 💰 Custos
+## Licença
 
-Este projeto utiliza o **Free Tier permanente** do Google Cloud Platform:
-- ✅ VM e2-micro (1 vCPU, 1GB RAM): **GRATUITO**
-- ✅ 30 GB de disco SSD: **GRATUITO**
-- ✅ IP Ephemeral: **GRATUITO**
-- ✅ 1GB de tráfego/mês: **GRATUITO**
-- ✅ **Custo total**: **R$ 0,00/mês** 🎉
+Este projeto é de código aberto e está disponível para uso educacional.
 
-**⚠️ Para manter gratuito**:
-- Use região `us-west1`, `us-central1` ou `us-east1`
-- Use tipo de máquina `e2-micro`
-- Use disco de até 30 GB
-- Use IP ephemeral (não reservar estático)
+## Autor
 
-### 📚 Documentação Adicional
-
-- 📖 [ATIVIDADE_04_IaC.md](ATIVIDADE_04_IaC.md) - Documentação completa da Atividade 04
-- 📖 [terraform/README.md](terraform/README.md) - Guia do Terraform
-- 📖 [GCP_SETUP.md](GCP_SETUP.md) - Setup manual do GCP (referência)
-- 📖 [SECRETS_SETUP.md](SECRETS_SETUP.md) - Configuração de secrets
-- 📖 [COMANDOS_UTEIS.md](COMANDOS_UTEIS.md) - Comandos úteis
-
----
-
- #   D e p l o y   v i a   C I / C D   c o n f i g u r a d o 
- 
- 
- #   D e p l o y   v i a   C I / C D   c o n f i g u r a d o 
- 
- 
+Desenvolvido por Aghiot

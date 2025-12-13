@@ -1,36 +1,34 @@
-# ========================================
-# README - Configuração do Terraform
-# ========================================
+# Configuracao do Terraform
 
-Este diretório contém a infraestrutura como código (IaC) para provisionar automaticamente
-a VM no Google Cloud Platform (GCP) para hospedar a aplicação ToDoList.
+Este diretorio contem a infraestrutura como codigo (IaC) para provisionar automaticamente
+a VM no Google Cloud Platform (GCP) para hospedar a aplicacao ToDoList.
 
-## 📁 Estrutura de Arquivos
+## Estrutura de Arquivos
 
 ```
 terraform/
-├── main.tf                    # Definição dos recursos (VM, firewall, etc)
-├── variables.tf               # Declaração de variáveis
-├── outputs.tf                 # Outputs (IP público, URLs, etc)
-├── backend.tf                 # Configuração do backend remoto (state)
-├── terraform.tfvars.example   # Exemplo de variáveis (copiar para terraform.tfvars)
+├── main.tf                    # Definicao dos recursos (VM, firewall, etc)
+├── variables.tf               # Declaracao de variaveis
+├── outputs.tf                 # Outputs (IP publico, URLs, etc)
+├── backend.tf                 # Configuracao do backend remoto (state)
+├── terraform.tfvars.example   # Exemplo de variaveis (copiar para terraform.tfvars)
 └── README.md                  # Este arquivo
 ```
 
-## 🚀 Uso Local (Desenvolvimento)
+## Uso Local (Desenvolvimento)
 
-### 1. Pré-requisitos
+### 1. Pre-requisitos
 
 - Terraform instalado: https://www.terraform.io/downloads
 - Conta no GCP com projeto criado
-- Service Account com permissões (Compute Admin)
+- Service Account com permissoes (Compute Admin)
 - Chave SSH gerada
 
 ### 2. Configurar Credenciais do GCP
 
-**Criar Service Account**:
+Criar Service Account:
 1. Acesse: https://console.cloud.google.com/iam-admin/serviceaccounts
-2. Clique em "Criar conta de serviço"
+2. Clique em "Criar conta de servico"
 3. Nome: `terraform-sa`
 4. Clique em "Criar e continuar"
 5. Adicione o papel: `Compute Admin` e `Storage Admin`
@@ -38,7 +36,7 @@ terraform/
 7. Clique na conta criada > "Chaves" > "Adicionar chave" > "JSON"
 8. Salve o arquivo JSON em local seguro
 
-**Configurar variável de ambiente**:
+Configurar variavel de ambiente:
 ```powershell
 # Windows PowerShell
 $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\service-account-key.json"
@@ -47,7 +45,7 @@ $env:GOOGLE_APPLICATION_CREDENTIALS="C:\path\to\service-account-key.json"
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 ```
 
-### 3. Configurar Variáveis
+### 3. Configurar Variaveis
 
 ```bash
 # Copiar arquivo de exemplo
@@ -57,10 +55,10 @@ cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
 
-**Preencha**:
+Preencha:
 - `gcp_project_id`: ID do seu projeto no GCP
-- `ssh_user`: Seu usuário (ex: triguinhogemeos)
-- `ssh_public_key`: Conteúdo da sua chave pública SSH (~/.ssh/id_ed25519.pub)
+- `ssh_user`: Seu usuario (ex: triguinhogemeos)
+- `ssh_public_key`: Conteudo da sua chave publica SSH (~/.ssh/id_ed25519.pub)
 
 ### 4. Criar Bucket para State Remoto (Opcional, mas recomendado)
 
@@ -74,13 +72,13 @@ gcloud storage buckets create gs://todolist-terraform-state \
 # Ou via console: https://console.cloud.google.com/storage
 ```
 
-**Se NÃO quiser usar backend remoto** (apenas para testes locais):
+Se NAO quiser usar backend remoto (apenas para testes locais):
 - Comente o bloco `backend "gcs"` no arquivo `backend.tf`
 
 ### 5. Executar Terraform
 
 ```bash
-# Entrar no diretório
+# Entrar no diretorio
 cd terraform
 
 # Inicializar (baixa providers e configura backend)
@@ -89,22 +87,22 @@ terraform init
 # Validar sintaxe
 terraform validate
 
-# Ver plano de execução (o que será criado)
+# Ver plano de execucao (o que sera criado)
 terraform plan
 
-# Aplicar mudanças (criar infraestrutura)
+# Aplicar mudancas (criar infraestrutura)
 terraform apply
 
 # Confirmar com: yes
 ```
 
-### 6. Obter Informações da VM
+### 6. Obter Informacoes da VM
 
 ```bash
 # Ver outputs
 terraform output
 
-# Ver IP público
+# Ver IP publico
 terraform output public_ip
 
 # Ver comando SSH
@@ -120,56 +118,56 @@ terraform destroy
 # Confirmar com: yes
 ```
 
-## 🤖 Uso no GitHub Actions (CI/CD)
+## Uso no GitHub Actions (CI/CD)
 
-O Terraform é executado automaticamente no pipeline de CI/CD antes do deploy.
+O Terraform e executado automaticamente no pipeline de CI/CD antes do deploy.
 
-### Secrets Necessários no GitHub
+### Secrets Necessarios no GitHub
 
 Adicione em: `https://github.com/aghiot321/To-do-List/settings/secrets/actions`
 
-| Secret | Descrição | Como Obter |
+| Secret | Descricao | Como Obter |
 |--------|-----------|------------|
 | `GCP_PROJECT_ID` | ID do projeto no GCP | Console GCP > Projeto |
 | `GCP_SA_KEY` | Service Account JSON completo | JSON baixado no passo 2 |
 | `GCP_TERRAFORM_BUCKET` | Nome do bucket para state | Ex: todolist-terraform-state |
-| `SSH_USER` | Usuário SSH da VM | Seu username no GCP |
-| `SSH_PUBLIC_KEY` | Chave SSH pública | Conteúdo de ~/.ssh/id_ed25519.pub |
-| `SSH_PRIVATE_KEY` | Chave SSH privada | Conteúdo de ~/.ssh/id_ed25519 |
+| `SSH_USER` | Usuario SSH da VM | Seu username no GCP |
+| `SSH_PUBLIC_KEY` | Chave SSH publica | Conteudo de ~/.ssh/id_ed25519.pub |
+| `SSH_PRIVATE_KEY` | Chave SSH privada | Conteudo de ~/.ssh/id_ed25519 |
 
 ### Fluxo do Pipeline
 
-1. **Teste (CI)**: Roda testes da aplicação
-2. **Provision Infra**: Terraform cria/atualiza a VM
-3. **Build**: Cria imagem Docker e publica
-4. **Deploy (CD)**: Deploy da aplicação na VM provisionada
+1. Teste (CI): Roda testes da aplicacao
+2. Provision Infra: Terraform cria/atualiza a VM
+3. Build: Cria imagem Docker e publica
+4. Deploy (CD): Deploy da aplicacao na VM provisionada
 
-## 📝 Recursos Criados
+## Recursos Criados
 
-- ✅ Compute Engine VM (e2-micro, free tier)
-- ✅ Regras de firewall (portas 8080, 3309)
-- ✅ Script de inicialização (instala Docker, Docker Compose, Git)
-- ✅ Configuração SSH automática
+- Compute Engine VM (e2-micro, free tier)
+- Regras de firewall (portas 8080, 3309)
+- Script de inicializacao (instala Docker, Docker Compose, Git)
+- Configuracao SSH automatica
 
-## 💡 Dicas
+## Dicas
 
-**Manter no Free Tier**:
-- Região: us-west1, us-central1 ou us-east1
-- Tipo de máquina: e2-micro
+Manter no Free Tier:
+- Regiao: us-west1, us-central1 ou us-east1
+- Tipo de maquina: e2-micro
 - Disco: 30GB ou menos
 - IP: Ephemeral (gratuito)
 
-**Segurança**:
+Seguranca:
 - NUNCA commite `terraform.tfvars` ou `*.tfstate*`
 - Use backend remoto para evitar perda do state
 - Proteja suas chaves SSH e service account
 
-**Troubleshooting**:
+Troubleshooting:
 ```bash
 # Ver logs da VM
 gcloud compute instances get-serial-port-output todolist-server --zone=us-west1-b
 
-# Forçar recriar VM
+# Forcar recriar VM
 terraform taint google_compute_instance.todolist_server
 terraform apply
 
@@ -180,7 +178,7 @@ terraform show
 terraform refresh
 ```
 
-## 🔗 Recursos Úteis
+## Recursos Uteis
 
 - [Terraform GCP Provider](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
 - [GCP Free Tier](https://cloud.google.com/free)

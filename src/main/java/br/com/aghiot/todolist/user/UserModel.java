@@ -14,14 +14,12 @@ public class UserModel {
     @GeneratedValue(generator = "UUID")
     private UUID id;
 
-
     @Column(unique = true)
     private String username;
     private String name;
     private String password;
 
-
-    @CreationTimestamp    
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
     public UUID getId() {
